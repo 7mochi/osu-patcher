@@ -50,6 +50,12 @@ The artifact bundles everything including the x86 `osu.Native.dll` (the native P
 Only the `Stable` release stream is officially supported! `Cutting Edge` and `Beta` release streams
 may have changes that cause errors or crashes. No support will be provided.
 
+### Wine
+
+Run osu! with `-devserver example.com` inside your Wine prefix, then launch the patcher with `wine osu!.patcher.exe`.
+It auto-detects the running osu! process (a PID can also be passed as an argument, e.g. `wine osu!.patcher.exe 1234`)
+and refuses to inject when osu! is connected to Bancho (`ppy.sh`).
+
 Latest tested `Stable` version: [`b20250309.2`](https://osu.ppy.sh/home/changelog/stable40/20250309.2).
 
 Your antivirus may detect it as malware, however this is completely expected as it contains code to inject 

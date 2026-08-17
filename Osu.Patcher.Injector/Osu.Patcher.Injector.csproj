@@ -17,7 +17,6 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="HoLLy.ManagedInjector" Version="1.0.0"/>
-        <PackageReference Include="System.Management" Version="7.0.1"/>
         <ProjectReference Include="../Osu.Patcher.Hook/Osu.Patcher.Hook.csproj">
             <SetTargetFramework>TargetFramework=net452</SetTargetFramework>
         </ProjectReference>

@@ -110,4 +110,80 @@ public static class Score
             .Single(field => field.FieldType.IsGenericType &&
                              field.FieldType.GetGenericTypeDefinition() == Obfuscated.Generic.Class.Reference)
     );
+
+    /// <summary>
+    ///     Original: <c>get_TotalHits()</c> (method used to locate the hit count fields)
+    /// </summary>
+    [Stub]
+    public static readonly LazyMethod<int> GetTotalHits = LazyMethod<int>.ByPartialSignature(
+        "osu.GameplayElements.Scoring.Score::get_TotalHits()",
+        [
+            Ldarg_0,
+            Ldfld,
+            Ldarg_0,
+            Ldfld,
+            Add,
+            Ldarg_0,
+            Ldfld,
+            Add,
+            Ldarg_0,
+            Ldfld,
+            Add,
+            Ret,
+        ],
+        type: Class.Reference
+    );
+
+    /// <summary> The four hit count fields, located from the <c>get_TotalHits()</c> IL. </summary>
+    private static readonly FieldInfo[] CountFields = GetCountFields();
+
+    private static FieldInfo[] GetCountFields()
+    {
+        var fields = MethodReader
+            .GetInstructions(GetTotalHits.Reference)
+            .Where(inst => inst.Opcode == Ldfld)
+            .Select(inst => (FieldInfo)inst.Operand!)
+            .ToArray();
+
+        if (fields.Length < 4)
+            throw new InvalidOperationException("Failed to locate the hit count fields of the Score class");
+
+        return fields;
+    }
+
+    /// <summary>
+    ///     Original: <c>Count50</c>
+    /// </summary>
+    [Stub]
+    public static readonly LazyField<object> Count50 = new(
+        "osu.GameplayElements.Scoring.Score::Count50",
+        () => CountFields[0]
+    );
+
+    /// <summary>
+    ///     Original: <c>Count100</c>
+    /// </summary>
+    [Stub]
+    public static readonly LazyField<object> Count100 = new(
+        "osu.GameplayElements.Scoring.Score::Count100",
+        () => CountFields[1]
+    );
+
+    /// <summary>
+    ///     Original: <c>Count300</c>
+    /// </summary>
+    [Stub]
+    public static readonly LazyField<object> Count300 = new(
+        "osu.GameplayElements.Scoring.Score::Count300",
+        () => CountFields[2]
+    );
+
+    /// <summary>
+    ///     Original: <c>CountMiss</c>
+    /// </summary>
+    [Stub]
+    public static readonly LazyField<object> CountMiss = new(
+        "osu.GameplayElements.Scoring.Score::CountMiss",
+        () => CountFields[3]
+    );
 }

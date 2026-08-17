@@ -49,9 +49,6 @@ internal static class PerformanceCalculator
         var modsObfuscated = Score.EnabledMods.Get(currentScore);
         var mods = ObfuscatedModsStub.GetValue.Invoke<int>(modsObfuscated);
 
-        // Clear relax mod for now (live pp calculations for relax are fucking garbage)
-        mods &= ~(1 << 7);
-
         var beatmap = Score.Beatmap.Get(currentScore);
         if (beatmap == null) return;
 

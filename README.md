@@ -44,6 +44,8 @@ Using this on official Bancho servers WILL get you banned.
 
 Until I have a release ready, then go to the [latest actions build](ehttps://github.com/rushiiMachine/osu-patcher/actions?query=branch%3Amaster) 
 for the `master` branch and download the attached artifact to extract. No automatic updater is included.
+The artifact bundles everything including the x86 `osu.Native.dll` (the native PP library, built from the
+[`third_party/osu-native`](third_party/osu-native) submodule by the CI).
 
 Only the `Stable` release stream is officially supported! `Cutting Edge` and `Beta` release streams
 may have changes that cause errors or crashes. No support will be provided.
@@ -55,9 +57,10 @@ into processes. If you aren't convinced it isn't a false positive, feel free to 
 
 ## Compiling
 
-1. Install the .NET SDK 8, the .NET Framework 4.5.2 developer pack, and Rust (rustup/cargo).
-2. Run `dotnet build Osu.Patcher.Injector -c Release`
-3. Output will be located in `./Osu.Patcher.Injector/bin/Release/net8.0/`
+1. Install the .NET SDK 8 (solution's `global.json`) and the .NET Framework 4.5.2 developer pack.
+2. Place the x86 `osu.Native.dll` (the native PP library) into `Osu.Performance/native/`, grab it from the latest CI artifact (`osu-native-x86`, or inside `osu!patcher-debug`). Without it the build still succeeds but the live PP feature is disabled. If you need to rebuild it yourself, publish from the `third_party/osu-native` submodule (`dotnet publish osu.Native -c Release -r win-x86`) after applying `patches/osu-native/*.patch`.
+3. Run `dotnet build Osu.Patcher.Injector -c Release`
+4. Output will be located in `./Osu.Patcher.Injector/bin/Release/net8.0/`
 
 ## How
 

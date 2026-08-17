@@ -40,5 +40,8 @@
         <Content Include="$(PkgLib_Harmony)\lib\net452\0Harmony.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+
+        <Content Include="..\Osu.Performance\native\osu.Native.dll" Link="osu.Native.dll"
+                 CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\Osu.Performance\native\osu.Native.dll')"/>
     </ItemGroup>
 </Project>

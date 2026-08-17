@@ -50,12 +50,13 @@ public static class Hook
 
         try
         {
-            // MSBuild is flimsy with building rosu-ffi on up-to-date builds, try linking early
-            Marshal.PrelinkAll(typeof(Native));
+            // Preload osu.Native.dll (next to the hook, not in the osu! process dir) and prelink the bindings
+            OsuNativeCalls.EnsureLoaded();
+            Marshal.PrelinkAll(typeof(OsuNativeCalls));
         }
         catch (Exception e)
         {
-            Console.WriteLine($"MSBuild broke again; clean & rebuild: {e}");
+            Console.WriteLine($"osu.Native.dll failed to load; ensure it is in the hook directory: {e}");
             ShowErrorNotification();
             return 0;
         }

@@ -1,0 +1,13 @@
+diff --git a/global.json b/global.json
+new file mode 100644
+index 0000000..cb40a97
+--- /dev/null
++++ b/global.json
+@@ -0,0 +1,7 @@
++{
++  "sdk": {
++    "version": "10.0.0",
++    "rollForward": "latestMinor",
++    "allowPrerelease": false
++  }
++}

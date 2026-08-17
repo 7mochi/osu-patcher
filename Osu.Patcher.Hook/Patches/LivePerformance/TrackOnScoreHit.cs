@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -6,13 +7,14 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using Osu.Performance;
 using Osu.Stubs.GameModes.Play.Rulesets;
+using Osu.Stubs.GameplayElements.HitObjects;
 using Osu.Stubs.GameplayElements.Scoring;
 
 namespace Osu.Patcher.Hook.Patches.LivePerformance;
 
 /// <summary>
 ///     Hooks <c>Ruleset::OnIncreaseScoreHit(...)</c> to send score updates to our performance calculator
-///     so it can recalculate based on new HitObject judgements.
+///     so it can recalculate performance based on new HitObject judgements.
 /// </summary>
 [OsuPatch]
 [HarmonyPatch]
@@ -28,8 +30,7 @@ internal static class TrackOnScoreHit
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     private static void After(
         object __instance, // is Ruleset
-        [HarmonyArgument(0)] int increaseScoreType,
-        [HarmonyArgument(2)] bool increaseCombo)
+        [HarmonyArgument(3)] object h) // is HitObject
     {
         if (!PerformanceOptions.ShowPerformanceInGame.Value)
             return;
@@ -40,24 +41,34 @@ internal static class TrackOnScoreHit
             return;
         }
 
-        var judgement = (increaseScoreType & ~IncreaseScoreType.OsuComboModifiers) switch
-        {
-            IncreaseScoreType.Osu300 => OsuJudgement.Result300,
-            IncreaseScoreType.Osu100 => OsuJudgement.Result100,
-            IncreaseScoreType.Osu50 => OsuJudgement.Result50,
-            IncreaseScoreType.OsuMiss => OsuJudgement.ResultMiss,
-            _ => OsuJudgement.None,
-        };
-
-        // If this can't increase the max combo and it doesn't change the judgement counts
-        // then skip this since it can't alter the pp values.
-        // TODO: fix issue in rosu-ffi
-        // if (!increaseCombo && judgement == OsuJudgement.None) return;
-        if (judgement == OsuJudgement.None) return;
-
         var CurrentScore = Ruleset.CurrentScore.Get(__instance);
-        var MaxCombo = Score.MaxCombo.Get(CurrentScore);
+        if (CurrentScore == null)
+            return;
 
-        Task.Run(() => PerformanceCalculator.Calculator?.AddJudgement(judgement, (uint)MaxCombo));
+        var performanceScore = CreateScore(CurrentScore);
+
+        var timeMs = HitObject.StartTime.Get(h);
+        Task.Run(() => PerformanceCalculator.Calculator?.AddScoreUpdate(timeMs, performanceScore));
     }
+
+    private static PerformanceScore CreateScore(object currentScore)
+    {
+        var count50 = ToUInt32(Score.Count50.Get(currentScore));
+        var count100 = ToUInt32(Score.Count100.Get(currentScore));
+        var count300 = ToUInt32(Score.Count300.Get(currentScore));
+        var countMiss = ToUInt32(Score.CountMiss.Get(currentScore));
+
+        return new PerformanceScore
+        {
+            MaxCombo = ToUInt32(Score.MaxCombo.Get(currentScore)),
+            PassedObjects = count300 + count100 + count50 + countMiss,
+            Count300 = count300,
+            Count100 = count100,
+            Count50 = count50,
+            CountMiss = countMiss,
+            Accuracy = Score.GetAccuracy.Invoke<float>(currentScore),
+        };
+    }
+
+    private static uint ToUInt32(object? value) => Convert.ToUInt32(value ?? 0, System.Globalization.CultureInfo.InvariantCulture);
 }

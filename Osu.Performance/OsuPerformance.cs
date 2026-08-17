@@ -1,32 +1,42 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Osu.Performance;
 
+/// <summary>
+///     Wraps the osu-native gradual performance calculator on a background thread,
+///     recalculating live PP as the game reports score judgements.
+/// </summary>
 [UsedImplicitly]
 public class OsuPerformance : IDisposable
 {
-    private readonly ConcurrentQueue<PendingCalculation> _queue;
-    private readonly CancellationTokenSource _queueTaskCancellation;
-    private IntPtr _state = IntPtr.Zero;
+    private readonly ConcurrentQueue<PendingUpdate> _queue = new();
+    private readonly CancellationTokenSource _cancellation;
+    private readonly string _mapPath;
+    private readonly uint _mods;
+
+    private OsuGradualPerformance? _gradual;
+    private volatile bool _disposed;
+    private volatile bool _failed;
+
+    [UsedImplicitly]
+    public event Action<double>? OnNewCalculation;
 
     public OsuPerformance(string mapPath, uint mods)
     {
-        _queue = new ConcurrentQueue<PendingCalculation>();
-        _queueTaskCancellation = new CancellationTokenSource();
+        _mapPath = mapPath;
+        _mods = mods;
+        _cancellation = new CancellationTokenSource();
 
         Debug.WriteLine("Starting background task", nameof(OsuPerformance));
         Task.Factory.StartNew(
-            () =>
-            {
-                _state = Native.InitializeOsuGradualPerformance(mapPath, mods);
-                ProcessQueue();
-            },
-            _queueTaskCancellation.Token,
+            InitializeAndProcessQueue,
+            _cancellation.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default
         );
@@ -34,84 +44,84 @@ public class OsuPerformance : IDisposable
 
     public void Dispose()
     {
-        Debug.WriteLine("Disposing", "OsuPerformance");
-        _queueTaskCancellation.Cancel();
-        Native.DisposeGradualOsuPerformance(_state);
+        _disposed = true;
+        _cancellation.Cancel();
+        _gradual?.Dispose();
+        _gradual = null;
         OnNewCalculation = null;
-        _state = IntPtr.Zero;
     }
 
-    [UsedImplicitly]
-    public event Action<double>? OnNewCalculation;
-
     /// <summary>
-    ///     Queues a judgement to be processed later.
+    ///     Queues the current score state to recalculate performance at the given playhead time.
     /// </summary>
-    /// <param name="judgement">
-    ///     The final hit result of an object. If this is a slider tick, spinner tick, etc., then this
-    ///     should be the <c>None</c> enum variant.
-    /// </param>
-    /// <param name="maxCombo">The currently highest max combo in the score.</param>
+    /// <param name="timeMs">The time of the most recently judged object.</param>
+    /// <param name="score">The current score state.</param>
     [UsedImplicitly]
-    public void AddJudgement(OsuJudgement judgement, uint maxCombo)
+    public void AddScoreUpdate(int timeMs, PerformanceScore score)
     {
-        if (_queueTaskCancellation.IsCancellationRequested) return;
+        if (_disposed || _failed || _cancellation.IsCancellationRequested)
+            return;
 
-        _queue.Enqueue(new PendingCalculation
+        _queue.Enqueue(new PendingUpdate
         {
-            Judgement = judgement,
-            MaxCombo = maxCombo,
+            TimeMs = timeMs,
+            Score = score,
         });
+    }
+
+    private void InitializeAndProcessQueue()
+    {
+        try
+        {
+            OsuNativeCalls.EnsureLoaded();
+
+            var beatmapText = File.ReadAllBytes(_mapPath);
+            _gradual = new OsuGradualPerformance(beatmapText, _mods);
+
+            if (_disposed)
+            {
+                _gradual.Dispose();
+                _gradual = null;
+                return;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to initialize osu-native performance calculator: {e}");
+            _failed = true;
+            return;
+        }
+
+        ProcessQueue();
     }
 
     private async void ProcessQueue()
     {
-        while (true)
+        while (!_disposed && !_cancellation.IsCancellationRequested)
         {
-            if (_queueTaskCancellation.IsCancellationRequested) return;
-            if (_state == IntPtr.Zero) // Not yet initialized
+            var gradual = _gradual;
+            if (gradual == null)
             {
-                await Task.Delay(300);
+                await Task.Delay(100);
                 continue;
             }
 
             while (_queue.TryDequeue(out var item))
             {
-                var performance = Native.CalculateGradualOsuPerformance(_state, item.Judgement, item.MaxCombo);
+                if (gradual.AdvanceAtTime(item.TimeMs, item.Score, out var performance))
+                    OnNewCalculation?.Invoke(performance);
 
-                if (performance < 0f)
-                {
-                    Debug.Fail("Cannot calculate performance after the end of a beatmap!");
-                    break;
-                }
-
-                OnNewCalculation?.Invoke(performance);
-
-                if (_queueTaskCancellation.IsCancellationRequested) return;
+                if (_disposed || _cancellation.IsCancellationRequested)
+                    return;
             }
 
             await Task.Delay(100);
         }
     }
 
-    // /// <summary>
-    // ///     Calculates the performance metrics of a score while and returns the complete info.
-    // ///     If this is a failed score, or is in progress for whatever reason, then the end of the score will be
-    // ///     calculated based on the sum of the amount of hits recorded in <paramref name="score" />.
-    // /// </summary>
-    // /// <param name="difficulty">The precalculated/cached difficulty attributes of a map.</param>
-    // /// <param name="score">A completed (or failed) score's info on the associated map.</param>
-    // /// <param name="mods">The set of mods that were used on this score.</param>
-    // [UsedImplicitly]
-    // public static OsuPerformanceInfo CalculateScore(
-    //     OsuDifficultyAttributes difficulty,
-    //     OsuScoreState score,
-    //     uint mods
-    // ) => Native.CalculateOsuPerformance(ref difficulty, ref score, mods);
-
-    private struct PendingCalculation
+    private struct PendingUpdate
     {
-        public OsuJudgement Judgement;
-        public ulong MaxCombo;
+        public int TimeMs;
+        public PerformanceScore Score;
     }
 }

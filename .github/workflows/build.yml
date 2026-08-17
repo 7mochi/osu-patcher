@@ -11,25 +11,45 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
     # Only run if this isn't a PR or this is a PR not from our repo
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.x.x
 
+      - name: Setup .NET SDK 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
       - name: Setup .NET Framework
         uses: microsoft/setup-msbuild@v2
 
-      - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          target: i686-pc-windows-msvc
+      - name: Apply osu-native patches
+        working-directory: third_party/osu-native
+        shell: pwsh
+        run: |
+          Get-ChildItem ..\..\patches\osu-native\*.patch | ForEach-Object {
+            git apply --reverse --check $_.FullName 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "  $($_.Name) already applied."
+            } else {
+              git apply $_.FullName
+              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            }
+          }
+
+      - name: Build osu.Native (x86)
+        working-directory: third_party/osu-native
+        run: dotnet publish osu.Native -c Release -r win-x86 -o ..\..\Osu.Performance\native
 
       - name: Build
         run: dotnet build Osu.Patcher.Injector
@@ -40,6 +60,13 @@ jobs:
           name: osu!patcher-debug
           if-no-files-found: error
           path: .\Osu.Patcher.Injector\bin\Debug\net8.0\**
+
+      - name: Upload osu-native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: osu-native-x86
+          if-no-files-found: error
+          path: .\Osu.Performance\native\osu.Native.dll
       
       - name: Run stub tests
         run: dotnet run --project Osu.Stubs.Tests

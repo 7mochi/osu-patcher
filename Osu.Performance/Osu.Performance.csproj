@@ -7,6 +7,7 @@
         <TargetFramework>net452</TargetFramework>
         <LangVersion>12</LangVersion>
         <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <DebugSymbols>true</DebugSymbols>
@@ -30,29 +31,13 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <NativeTarget>i686-pc-windows-msvc</NativeTarget>
-        <CargoBuild>cargo build --color=never --message-format=human --target $(NativeTarget)</CargoBuild>
-        <CargoOutput>.\rosu-ffi\target\$(NativeTarget)\$(Configuration.ToLower())</CargoOutput>
+        <NativeTarget>native\osu.Native.dll</NativeTarget>
     </PropertyGroup>
-    <ItemGroup>
-        <CompileNative Include=".\rosu-ffi\src\**\*.rs"/>
-        <CompileNative Include=".\rosu-ffi\src\Cargo.toml"/>
-        <CompileNative Include=".\rosu-ffi\src\Cargo.lock"/>
-    </ItemGroup>
-    <Target Name="BuildNative" BeforeTargets="BeforeBuild" Inputs="@(CompileNative)" Outputs="$(CargoOutput)\rosu.dll;$(CargoOutput)\rosu.pdb">
-        <Exec WorkingDirectory="rosu-ffi" Condition="'$(Configuration)' == 'Debug'" Command="$(CargoBuild)"/>
-        <Exec WorkingDirectory="rosu-ffi" Condition="'$(Configuration)' == 'Release'" Command="$(CargoBuild) --release"/>
-
-        <ItemGroup>
-            <ROsuOutput Include="$(CargoOutput)\rosu.dll"/>
-            <ROsuOutput Include="$(CargoOutput)\rosu.pdb" Condition="'$(Configuration)' == 'Debug'"/>
-            <Content Include="@(ROsuOutput)">
-                <TargetPath>rosu.ffi%(Extension)</TargetPath>
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            </Content>
+    <Target Name="CopyNative" BeforeTargets="BeforeBuild">
+        <Warning Condition="!Exists('$(NativeTarget)')"
+                 Text="osu.Native.dll (x86) not found. Grab it from the latest CI artifact (osu-native-x86) and place it in '$(MSBuildProjectDirectory)\$(NativeTarget)' to enable the live PP feature; without it the build still succeeds but the PP counter is disabled."/>
+        <ItemGroup Condition="Exists('$(NativeTarget)')">
+            <Content Include="$(NativeTarget)" CopyToOutputDirectory="PreserveNewest" Link="osu.Native.dll"/>
         </ItemGroup>
-    </Target>
-    <Target Name="CleanNative" AfterTargets="Clean">
-        <Exec WorkingDirectory="rosu-ffi" Command="cargo clean"/>
     </Target>
 </Project>

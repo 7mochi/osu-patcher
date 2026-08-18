@@ -47,9 +47,9 @@ internal class FixUpdatePlaybackRate
                 Ldarg_0,
                 Ldfld,
                 Dup,
-                Stloc_1,
+                Stloc_2,
                 Stfld,
-                Ldloc_1,
+                Ldloc_2,
                 Call,
                 Br_S,
             ]

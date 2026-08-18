@@ -24,6 +24,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all"/>
 
         <!-- I have to do this stupid shit because NuGet doesn't respect ProjectReference.SetTargetFramework for transitive dependencies -->
         <!-- https://github.com/NuGet/Home/issues/12436 -->

@@ -26,6 +26,7 @@
 
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all"/>
         <ProjectReference Include="../Osu.Performance/Osu.Performance.csproj">
             <SetTargetFramework>TargetFramework=net452</SetTargetFramework>
         </ProjectReference>

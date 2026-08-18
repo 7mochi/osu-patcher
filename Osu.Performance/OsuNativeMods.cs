@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Osu.Performance;
@@ -68,7 +69,12 @@ internal static class OsuNativeMods
 
             try
             {
-                foreach (var acronym in ToAcronyms(mods))
+                var acronyms = ToAcronyms(mods).ToList();
+
+                if (!acronyms.Contains("CL"))
+                    acronyms.Add("CL");
+
+                foreach (var acronym in acronyms)
                 {
                     uint modHandle = CreateMod(acronym);
                     try

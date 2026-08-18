@@ -29,11 +29,7 @@ internal static class OsuLoader
             var osuDir = Path.Combine(Assembly.GetExecutingAssembly().Location, "../osu!");
             var osuExe = Path.Combine(osuDir, "osu!.exe");
 
-            if (!Directory.Exists(osuDir)) // TODO: check file hashes to force re-download if outdated
-            {
-                Directory.CreateDirectory(osuDir);
-                await OsuApi.DownloadOsu(osuDir);
-            }
+            await OsuApi.RefreshOsu(osuDir);
 
             Console.WriteLine("Loading osu!.exe");
 

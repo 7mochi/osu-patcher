@@ -52,7 +52,7 @@ public static class OsuApi
     /// <param name="stream">The release stream to download.</param>
     public static async Task DownloadOsu(string dir, ReleaseStream stream = ReleaseStream.Stable40)
     {
-        var updateFiles = await GetReleaseFiles(ReleaseStream.Stable40);
+        var updateFiles = await GetReleaseFiles(stream);
 
         Parallel.ForEach(updateFiles, updateFile =>
         {
@@ -61,6 +61,39 @@ public static class OsuApi
         });
 
         Console.WriteLine("Finished downloading osu!");
+    }
+
+    /// <summary>
+    ///     Ensures the osu! directory matches the latest release files of the given stream,
+    ///     only re-downloading files whose hash differs from the local copy (or that are missing).
+    /// </summary>
+    /// <param name="dir">The directory to hold the osu! files.</param>
+    /// <param name="stream">The release stream to keep up-to-date.</param>
+    public static async Task RefreshOsu(string dir, ReleaseStream stream = ReleaseStream.Stable40)
+    {
+        var updateFiles = await GetReleaseFiles(stream);
+
+        Directory.CreateDirectory(dir);
+
+        Parallel.ForEach(updateFiles, updateFile =>
+        {
+            var path = Path.Combine(dir, updateFile.FileName);
+
+            if (File.Exists(path) && ComputeMd5(path).Equals(updateFile.FileHash, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            Console.WriteLine($"Downloading {updateFile.FileName}");
+            DownloadFile(updateFile.DownloadUrl, path).Wait();
+        });
+
+        Console.WriteLine("Finished refreshing osu!");
+    }
+
+    private static string ComputeMd5(string path)
+    {
+        using var md5 = System.Security.Cryptography.MD5.Create();
+        using var stream = File.OpenRead(path);
+        return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "");
     }
 
     private static async Task DownloadFile(string url, string path)

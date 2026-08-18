@@ -186,4 +186,37 @@ public static class Score
         "osu.GameplayElements.Scoring.Score::CountMiss",
         () => CountFields[3]
     );
+
+    private static readonly FieldInfo[] GekiKatuFields = GetGekiKatuFields();
+
+    private static FieldInfo[] GetGekiKatuFields()
+    {
+        var fields = Class.Reference
+            .GetDeclaredFields()
+            .Where(field => field.FieldType == typeof(ushort) && !CountFields.Contains(field))
+            .ToArray();
+
+        if (fields.Length < 2)
+            throw new InvalidOperationException("Failed to locate the geki/katu hit count fields of the Score class");
+
+        return fields;
+    }
+
+    /// <summary>
+    ///     Original: <c>CountGeki</c>
+    /// </summary>
+    [Stub]
+    public static readonly LazyField<object> CountGeki = new(
+        "osu.GameplayElements.Scoring.Score::CountGeki",
+        () => GekiKatuFields[0]
+    );
+
+    /// <summary>
+    ///     Original: <c>CountKatu</c>
+    /// </summary>
+    [Stub]
+    public static readonly LazyField<object> CountKatu = new(
+        "osu.GameplayElements.Scoring.Score::CountKatu",
+        () => GekiKatuFields[1]
+    );
 }

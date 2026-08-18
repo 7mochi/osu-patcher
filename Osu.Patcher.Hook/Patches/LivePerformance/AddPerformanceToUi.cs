@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using JetBrains.Annotations;
@@ -15,7 +14,7 @@ namespace Osu.Patcher.Hook.Patches.LivePerformance;
 
 /// <summary>
 ///     Hooks the constructor of <c>ScoreDisplay</c> to add our own <c>pTextSprite</c> for displaying
-///     the performance counter to the ScoreDisplay's sprite manager.
+///     the performance counter, positioned above the hit error bar.
 ///     To display "pp" this needs <c>score-p@2x.png</c>/<c>score-p.png</c> in your skin's defined score font.
 /// </summary>
 [OsuPatch]
@@ -30,13 +29,7 @@ internal static class AddPerformanceToUi
     [UsedImplicitly]
     [HarmonyPostfix]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    private static void After(
-        object __instance, // ScoreDisplay
-        [HarmonyArgument(0)] object spriteManager, // SpriteManager
-        [HarmonyArgument(1)] object position, // Vector2
-        [HarmonyArgument(2)] bool alignRight,
-        [HarmonyArgument(3)] float scale
-    )
+    private static void After([HarmonyArgument(0)] object spriteManager) // SpriteManager
     {
         if (!PerformanceOptions.ShowPerformanceInGame.Value)
             return;
@@ -52,23 +45,16 @@ internal static class AddPerformanceToUi
             /* text: */ "00.0pp",
             /* fontName: */ scoreFont,
             /* spacingOverlap: */ (float)scoreFontOverlap,
-            /* fieldType: */ alignRight ? Fields.TopRight : Fields.TopLeft,
-            /* origin: */ alignRight ? Origins.TopRight : Origins.TopLeft,
+            /* fieldType: */ Fields.BottomCentre,
+            /* origin: */ Origins.BottomCentre,
             /* clock: */ Clocks.Game,
-            /* startPosition: */ Vector2.Constructor.Invoke([0f, 0f]),
+            /* startPosition: */ Vector2.Constructor.Invoke([0f, 22f]),
             /* drawDepth: */ 0.95f,
             /* alwaysDraw: */ true,
             /* color: */ Color.White,
             /* precache: */ true,
             /* source: */ SkinSource.ExceptBeatmap,
         ]);
-
-        // Cannot be startPosition directly
-        // TODO: don't add 9f offset if score-p@2x.png/score-p.png texture exists
-        var positionX = Vector2.X.Get(position) + 8f;
-        var positionY = GetYOffset(Vector2.Y.Get(position), scale, __instance);
-        var newPosition = Vector2.Constructor.Invoke([positionX, positionY]);
-        pDrawable.Position.Set(performanceSprite, newPosition);
 
         pDrawable.Scale.Set(performanceSprite, 0.50f);
         pSpriteText.TextConstantSpacing.Set(performanceSprite, true);
@@ -78,23 +64,5 @@ internal static class AddPerformanceToUi
         PerformanceDisplay.SetPerformanceCounter(performanceSprite);
 
         Debug.WriteLine("Added Performance Counter to ScoreDisplay", nameof(AddPerformanceToUi));
-    }
-
-    private static float GetYOffset(float baseYPosition, float scale, object scoreDisplay)
-    {
-        // Read the heights of both pSpriteTexts: s_Score, s_Accuracy
-        var sprites = ScoreDisplay.Class.Reference
-            .GetDeclaredFields()
-            .Where(f => f.FieldType == pSpriteText.Class.Reference)
-            .Select(f => f.GetValue(scoreDisplay));
-        var spriteSizes = sprites
-            .Where(s => s != null)
-            .Select(s => pSpriteText.MeasureText.Invoke(s));
-        var totalSpriteHeight = spriteSizes.Sum(v => Vector2.Y.Get(v)) * 0.58f * scale;
-
-        // Preserve additional spacing between s_Score and s_Accuracy
-        var additionalOffset = SkinManager.GetUseNewLayout.Invoke() ? 3f : 0f;
-
-        return baseYPosition + totalSpriteHeight + additionalOffset;
     }
 }

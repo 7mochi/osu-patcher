@@ -1,7 +1,9 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using Osu.Stubs.GameplayElements.Scoring;
+using Osu.Utils.IL;
 using Osu.Utils.Lazy;
 using static System.Reflection.Emit.OpCodes;
 
@@ -72,4 +74,33 @@ public static class Player
             .GetFields(BindingFlags.Static | BindingFlags.NonPublic)
             .Single(field => field.FieldType == Score.Class.Reference)
     );
+
+    /// <summary>
+    ///     Original: <c>get_Mode()</c> (the mode currently being played)
+    /// </summary>
+    [Stub]
+    public static readonly LazyMethod<object> GetMode = new(
+        "osu.GameModes.Play.Player::get_Mode()",
+        FindGetMode
+    );
+
+    private static MethodInfo FindGetMode()
+    {
+        foreach (var method in Class.Reference.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+        {
+            if (!method.ReturnType.IsEnum || method.GetParameters().Length != 0)
+                continue;
+
+            var instructions = MethodReader.GetInstructions(method).ToArray();
+            if (instructions.Length != 2 || instructions[0].Opcode != Ldsfld || instructions[1].Opcode != Ret)
+                continue;
+
+            if (instructions[0].Operand is FieldInfo { IsStatic: true } field &&
+                field.DeclaringType == method.DeclaringType &&
+                field.FieldType == method.ReturnType)
+                return method;
+        }
+
+        throw new InvalidOperationException("Failed to locate Player.get_Mode");
+    }
 }

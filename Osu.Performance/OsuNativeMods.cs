@@ -22,6 +22,16 @@ internal static class OsuNativeMods
     private const uint SpunOut = 1 << 12;
     private const uint Relax2 = 1 << 13;
     private const uint Perfect = 1 << 14;
+    private const uint Key4 = 1 << 15;
+    private const uint Key5 = 1 << 16;
+    private const uint Key6 = 1 << 17;
+    private const uint Key7 = 1 << 18;
+    private const uint Key8 = 1 << 19;
+    private const uint Key9 = 1 << 24;
+    private const uint KeyCoop = 1 << 25;
+    private const uint Key1 = 1 << 26;
+    private const uint Key3 = 1 << 27;
+    private const uint Key2 = 1 << 28;
 
     /// <summary> Converts the legacy mod flags to a deduplicated list of acronyms (NC over DT, PF over SD). </summary>
     public static string[] ToAcronyms(uint mods)
@@ -39,6 +49,16 @@ internal static class OsuNativeMods
         Add(SpunOut, "SO");
         Add(Relax, "RX");
         Add(Relax2, "AP");
+        Add(Key1, "1K");
+        Add(Key2, "2K");
+        Add(Key3, "3K");
+        Add(Key4, "4K");
+        Add(Key5, "5K");
+        Add(Key6, "6K");
+        Add(Key7, "7K");
+        Add(Key8, "8K");
+        Add(Key9, "9K");
+        Add(KeyCoop, "CO");
 
         if ((mods & Nightcore) != 0)
             Add(Nightcore, "NC");

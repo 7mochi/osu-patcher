@@ -19,6 +19,7 @@ public class OsuPerformance : IDisposable
     private readonly CancellationTokenSource _cancellation;
     private readonly string _mapPath;
     private readonly uint _mods;
+    private readonly int _mode;
 
     private OsuGradualPerformance? _gradual;
     private volatile bool _disposed;
@@ -27,8 +28,9 @@ public class OsuPerformance : IDisposable
     [UsedImplicitly]
     public event Action<double>? OnNewCalculation;
 
-    public OsuPerformance(string mapPath, uint mods)
+    public OsuPerformance(int mode, string mapPath, uint mods)
     {
+        _mode = mode;
         _mapPath = mapPath;
         _mods = mods;
         _cancellation = new CancellationTokenSource();
@@ -76,7 +78,7 @@ public class OsuPerformance : IDisposable
             OsuNativeCalls.EnsureLoaded();
 
             var beatmapText = File.ReadAllBytes(_mapPath);
-            _gradual = new OsuGradualPerformance(beatmapText, _mods);
+            _gradual = new OsuGradualPerformance(_mode, beatmapText, _mods);
 
             if (_disposed)
             {

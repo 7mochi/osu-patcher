@@ -64,6 +64,66 @@ public static class OsuNativeCalls
     internal static extern ErrorCode OsuPerformanceCalculator_Destroy(uint handle);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode TaikoDifficultyCalculator_Create(uint ruleset, uint beatmap, uint* calculator);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode TaikoDifficultyCalculator_CalculateTimed(
+        uint calc, uint modsCollectionHandle, NativeTimedTaikoDifficultyAttributes* attributes, int* bufferSize);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern ErrorCode TaikoDifficultyCalculator_Destroy(uint handle);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode TaikoPerformanceCalculator_Create(uint* calculator);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode TaikoPerformanceCalculator_Calculate(
+        uint calc, NativeScoreInfo score, NativeTaikoDifficultyAttributes difficulty, NativeTaikoPerformanceAttributes* attributes);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern ErrorCode TaikoPerformanceCalculator_Destroy(uint handle);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode CatchDifficultyCalculator_Create(uint ruleset, uint beatmap, uint* calculator);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode CatchDifficultyCalculator_CalculateTimed(
+        uint calc, uint modsCollectionHandle, NativeTimedCatchDifficultyAttributes* attributes, int* bufferSize);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern ErrorCode CatchDifficultyCalculator_Destroy(uint handle);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode CatchPerformanceCalculator_Create(uint* calculator);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode CatchPerformanceCalculator_Calculate(
+        uint calc, NativeScoreInfo score, NativeCatchDifficultyAttributes difficulty, NativeCatchPerformanceAttributes* attributes);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern ErrorCode CatchPerformanceCalculator_Destroy(uint handle);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode ManiaDifficultyCalculator_Create(uint ruleset, uint beatmap, uint* calculator);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode ManiaDifficultyCalculator_CalculateTimed(
+        uint calc, uint modsCollectionHandle, NativeTimedManiaDifficultyAttributes* attributes, int* bufferSize);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern ErrorCode ManiaDifficultyCalculator_Destroy(uint handle);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode ManiaPerformanceCalculator_Create(uint* calculator);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern unsafe ErrorCode ManiaPerformanceCalculator_Calculate(
+        uint calc, NativeScoreInfo score, NativeManiaDifficultyAttributes difficulty, NativeManiaPerformanceAttributes* attributes);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern ErrorCode ManiaPerformanceCalculator_Destroy(uint handle);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern unsafe ErrorCode ModsCollection_Create(NativeModsCollection* modCollection);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

@@ -55,7 +55,9 @@ internal static class PerformanceCalculator
         var beatmapPath = Beatmap.GetBeatmapPath(beatmap);
         if (beatmapPath == null) return;
 
-        Calculator = new OsuPerformance(beatmapPath, (uint)mods);
+        var mode = Convert.ToInt32(Player.GetMode.Invoke(), System.Globalization.CultureInfo.InvariantCulture);
+
+        Calculator = new OsuPerformance(mode, beatmapPath, (uint)mods);
         Calculator.OnNewCalculation += PerformanceDisplay.UpdatePerformanceCounter;
 
         Debug.WriteLine("Initialized performance calculator!", nameof(PerformanceCalculator));

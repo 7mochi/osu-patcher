@@ -81,6 +81,69 @@ internal struct NativeTimedOsuDifficultyAttributes
     public NativeOsuDifficultyAttributes Attributes;
 }
 
+internal struct NativeTaikoDifficultyAttributes
+{
+    public double StarRating;
+    public int MaxCombo;
+    public double MechanicalDifficulty;
+    public double RhythmDifficulty;
+    public double ReadingDifficulty;
+    public double ColourDifficulty;
+    public double StaminaDifficulty;
+    public double MonoStaminaFactor;
+    public double ConsistencyFactor;
+    public double StaminaTopStrains;
+}
+
+internal struct NativeTimedTaikoDifficultyAttributes
+{
+    public double Time;
+    public NativeTaikoDifficultyAttributes Attributes;
+}
+
+internal struct NativeTaikoPerformanceAttributes
+{
+    public double Total;
+    public double Difficulty;
+    public double Accuracy;
+    public NativeNullableDouble EstimatedUnstableRate;
+}
+
+internal struct NativeCatchDifficultyAttributes
+{
+    public double StarRating;
+    public int MaxCombo;
+}
+
+internal struct NativeTimedCatchDifficultyAttributes
+{
+    public double Time;
+    public NativeCatchDifficultyAttributes Attributes;
+}
+
+internal struct NativeCatchPerformanceAttributes
+{
+    public double Total;
+}
+
+internal struct NativeManiaDifficultyAttributes
+{
+    public double StarRating;
+    public int MaxCombo;
+}
+
+internal struct NativeTimedManiaDifficultyAttributes
+{
+    public double Time;
+    public NativeManiaDifficultyAttributes Attributes;
+}
+
+internal struct NativeManiaPerformanceAttributes
+{
+    public double Total;
+    public double Difficulty;
+}
+
 internal struct NativeOsuPerformanceAttributes
 {
     public double Total;
